@@ -1,2 +1,2 @@
 # Bosonic-Systems
-Library that works with systems described by quadratic N distinguishable bosons.
+Library that can diagonalize systems that are composed by N distinct bosons.  The Hamiltonian must be quadratic.
