@@ -8,19 +8,21 @@ import sys
 sys.path.insert(0, "..")
 from BosonicSystem import *
 
+os.chdir("..")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Constants
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-S = 1
+N = 2
+
+
+S = np.ones(N)
 J = 1
 Dz = 0
-Bz = 0
+Bz = np.linspace(0, 1, num=N)
 
 a = 1
-N = 2
 k_arr = np.linspace(-np.pi/(N*a), np.pi/(N*a), num=100)
 
-os.chdir("..")
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # main
@@ -62,17 +64,17 @@ def create_Tmatrix(k):
 
     for j1 in range(N):
         for j2 in range(N):
-            Tmatrix[j1,j1] += 0.5*S*Jq(0,j1,j2)
-            Tmatrix[j2,j2] += 0.5*S*Jq(0,j1,j2)
-            Tmatrix[j1,j2] -= 0.5*S*(Jq(k,j1,j2) + Jq(-k,j2,j1))
-            Tmatrix[j1,j2] -= 0.5j*S*(Dq(k,j1,j2) - Dq(-k,j2,j1))
-            Tmatrix[j1,j2] += Bz*(j1 == j2)
+            Tmatrix[j1,j1] += 0.5*np.sqrt(S[j1]*S[j2])*Jq(0,j1,j2)
+            Tmatrix[j2,j2] += 0.5*np.sqrt(S[j1]*S[j2])*Jq(0,j1,j2)
+            Tmatrix[j1,j2] -= 0.5*np.sqrt(S[j1]*S[j2])*(Jq(k,j1,j2) + Jq(-k,j2,j1))
+            Tmatrix[j1,j2] -= 0.5j*np.sqrt(S[j1]*S[j2])*(Dq(k,j1,j2) - Dq(-k,j2,j1))
+            Tmatrix[j1,j2] += Bz[j1]*(j1 == j2)
 
-            Tmatrix[N+j1,N+j1] += 0.5*S*Jq(0,j1,j2)
-            Tmatrix[N+j2,N+j2] += 0.5*S*Jq(0,j1,j2)
-            Tmatrix[N+j1,N+j2] -= 0.5*S*(Jq(k,j1,j2) + Jq(-k,j2,j1))
-            Tmatrix[N+j1,N+j2] -= 0.5j*S*(Dq(k,j1,j2) - Dq(-k,j1,j2))
-            Tmatrix[N+j1,N+j2] += Bz*(j1 == j2)
+            Tmatrix[N+j1,N+j1] += 0.5*np.sqrt(S[j1]*S[j2])*Jq(0,j1,j2)
+            Tmatrix[N+j2,N+j2] += 0.5*np.sqrt(S[j1]*S[j2])*Jq(0,j1,j2)
+            Tmatrix[N+j1,N+j2] -= 0.5*np.sqrt(S[j1]*S[j2])*(Jq(k,j1,j2) + Jq(-k,j2,j1))
+            Tmatrix[N+j1,N+j2] -= 0.5j*np.sqrt(S[j1]*S[j2])*(Dq(k,j1,j2) - Dq(-k,j1,j2))
+            Tmatrix[N+j1,N+j2] += Bz[j1]*(j1 == j2)
 
     return Tmatrix
 
