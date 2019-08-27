@@ -34,7 +34,7 @@ a = 1
 k_arr = np.linspace(-np.pi/a, np.pi/a, num=100)
 
 k_arr = np.linspace(0.45, 0.55, num=100)
-# ylim = [0.20, 0.3]
+ylim = [0.20, 0.30]
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
