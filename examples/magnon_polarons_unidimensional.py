@@ -22,18 +22,18 @@ mu_B = 1
 g = 1
 S = 1
 J = 1
-Dz = 0
+Dz = 0.0
 Bz = 0
 
 # magnon polarons constants
-Dprime = [0.0, 0.0, 0.0]
-Bprime = [0.0, 0.01, 0.0]
+Dprime = [0.01, 0.02, 0.03]
+Bprime = [0.01, 0.02, 0.03]
 
 # lattice constants
 a = 1
 k_arr = np.linspace(-np.pi/a, np.pi/a, num=100)
 
-k_arr = np.linspace(-0.55, -0.45, num=100)
+k_arr = np.linspace(0.45, 0.55, num=100)
 # ylim = [0.20, 0.3]
 
 
@@ -47,16 +47,10 @@ def main():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Functions
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-def phi(k):
-    return np.sqrt(0.5*hbar) * (
-        np.sqrt(0.5*S**3)*(-1j*Dprime[0]+Dprime[1])*np.abs(np.exp(1j*k*a)-1)**2 -
-        mu_B*g*np.sqrt(0.5*S)*(Bprime[0]+1j*Bprime[1])
-    )
-
 def psi(k):
-    return np.sqrt(0.5*hbar) * (
-        np.sqrt(0.5*S**3)*(1j*Dprime[0]+Dprime[1])*(np.exp(1j*k*a)-1)**2 -
-        mu_B*g*np.sqrt(0.5*S)*(Bprime[0]-1j*Bprime[1])
+    return np.sqrt(0.25*hbar*S) * (
+        S*(1j*Dprime[0]+Dprime[1])*np.abs(np.exp(1j*k*a)-1)**2 -
+        mu_B*g*(Bprime[0]-1j*Bprime[1])
     )
 
 def create_Tmatrix(k):
@@ -68,11 +62,11 @@ def create_Tmatrix(k):
     Tmatrix[2,2] = 2*J*S*(1-np.cos(k*a)) - 2*Dz*S*np.sin(k*a) + mu_B*g*Bz
     Tmatrix[3,3] = hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
 
-    Tmatrix[0,1] = 0.5*phi(k) + 0.5*np.conjugate(psi(-k))
-    Tmatrix[1,0] = np.conjugate( 0.5*phi(k) + 0.5*np.conjugate(psi(-k)) )
+    Tmatrix[0,1] = 0.5*np.conjugate(psi(k))
+    Tmatrix[1,0] = 0.5*psi(k)
 
-    Tmatrix[2,3] = 0.5*psi(k) + 0.5*np.conjugate(phi(-k))
-    Tmatrix[3,2] = np.conjugate( 0.5*psi(k) + 0.5*np.conjugate(phi(-k)) )
+    Tmatrix[2,3] = 0.5*np.conjugate(psi(k))
+    Tmatrix[3,2] = 0.5*psi(k)
 
     return Tmatrix
 
@@ -84,11 +78,11 @@ def create_Umatrix(k):
     Umatrix[1,3] = -hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
     Umatrix[3,1] = -hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
 
-    Umatrix[0,3] = 0.5*phi(k) + 0.5*np.conjugate(psi(-k))
-    Umatrix[3,0] = 0.5*phi(k) + 0.5*np.conjugate(psi(-k))
+    Umatrix[0,3] = 0.5*np.conjugate(psi(k))
+    Umatrix[3,0] = 0.5*np.conjugate(psi(k))
 
-    Umatrix[1,2] = 0.5*phi(-k) + 0.5*np.conjugate(psi(k))
-    Umatrix[2,1] = 0.5*phi(-k) + 0.5*np.conjugate(psi(k))
+    Umatrix[1,2] = 0.5*np.conjugate(psi(k))
+    Umatrix[2,1] = 0.5*np.conjugate(psi(k))
 
     return Umatrix
 
@@ -96,18 +90,18 @@ def create_Umatrix(k):
 def dispersion_relation(k_arr):
     num_k = k_arr.shape[0]
 
-    energies = np.zeros((4, num_k))
+    energies = np.zeros((4*2, num_k))
     U = [None for _ in range(num_k)]
 
     for i, k in enumerate(k_arr):
         bosonic_system = BosonicSystem(create_Tmatrix(k), create_Umatrix(k))
-        energies[:,i] = bosonic_system.energies()
+        energies[:,i], U[i] = bosonic_system.diagonalize()
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.plot(k_arr, phonon_energy(k_arr), color="darkblue")
     ax.plot(k_arr, magnon_energy(k_arr), color="darkblue")
-    for i in range(len(energies)):
+    for i in range(len(energies)//2):
         ax.plot(k_arr, energies[i,:], '--', color="orange")
 
     try:
