@@ -17,8 +17,8 @@ os.chdir("..")
 hbar = 1
 m = 1
 Omega = np.array([[1.0, 0.0, 0.0],
-                  [0.0, 0.0, 0.0],
-                  [0.0, 0.0, 0.0]])
+                  [0.0, 1.0, 0.0],
+                  [0.0, 0.0, 1.0]])
 
 # magnon constants
 mu_B = 1
@@ -41,7 +41,7 @@ a = 1
 k_arr = np.linspace(-np.pi/a, np.pi/a, num=100)
 
 k_arr = np.linspace(0.45, 0.55, num=100)
-ylim = [0.20, 0.30]
+# ylim = [0.20, 0.30]
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # main
