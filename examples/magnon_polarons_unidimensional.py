@@ -110,7 +110,7 @@ def dispersion_relation(k_arr):
         pass
     ax.grid()
     fig.tight_layout()
-    fig.savefig("img/unidimensional_magnon_polarons.png")
+    fig.savefig("img/magnon_polarons_unidimensional.png")
 
     plt.show()
     plt.close(fig)

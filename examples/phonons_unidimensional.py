@@ -67,7 +67,7 @@ def dispersion_relation(k_arr):
         ax.plot(k_arr, energies[i,:], '--', color="orange")
     ax.grid()
     fig.tight_layout()
-    fig.savefig("img/unidimensional_phonons.png")
+    fig.savefig("img/phonons_unidimensional.png")
 
     plt.show()
     plt.close(fig)
