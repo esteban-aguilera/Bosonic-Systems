@@ -41,7 +41,7 @@ a = 1
 k_arr = np.linspace(-np.pi/a, np.pi/a, num=100)
 
 k_arr = np.linspace(0.45, 0.55, num=100)
-# ylim = [0.20, 0.30]
+ylim = [0.20, 0.30]
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # main
@@ -118,11 +118,8 @@ def create_Umatrix(k):
 
     # magnon-phonon interaction
     for lambd in range(1,4):
-        Umatrix[0,4+lambd] = 0.5*np.conjugate(Psi(k,vecs[:,lambd-1]))
-        Umatrix[4+lambd,0] = 0.5*np.conjugate(Psi(k,vecs[:,lambd-1]))
-
-        Umatrix[lambd,4] = 0.5*np.conjugate(Psi(k,vecs[:,lambd-1]))
-        Umatrix[4,lambd] = 0.5*np.conjugate(Psi(k,vecs[:,lambd-1]))
+        Umatrix[0,4+lambd] = np.conjugate(Psi(k,vecs[:,lambd-1]))
+        Umatrix[0+lambd,4] = np.conjugate(Psi(k,vecs[:,lambd-1]))
 
     return Umatrix
 

@@ -78,11 +78,8 @@ def create_Umatrix(k):
     Umatrix[1,3] = -hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
     Umatrix[3,1] = -hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
 
-    Umatrix[0,3] = 0.5*np.conjugate(psi(k))
-    Umatrix[3,0] = 0.5*np.conjugate(psi(k))
-
-    Umatrix[1,2] = 0.5*np.conjugate(psi(k))
-    Umatrix[2,1] = 0.5*np.conjugate(psi(k))
+    Umatrix[0,3] = np.conjugate(psi(k))
+    Umatrix[1,2] = np.conjugate(psi(k))
 
     return Umatrix
 
