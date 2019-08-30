@@ -18,7 +18,7 @@ N = 1  # number of sites per unit cell
 # phonon constants
 hbar = 1
 m = 1 * np.ones(N)
-Omega = np.array([[1.0, 0.0, 0.0],
+Omega = np.array([[2.0, 0.0, 0.0],
                   [0.0, 1.0, 0.0],
                   [0.0, 0.0, 1.0]])
 
@@ -34,15 +34,17 @@ Bz = 0 * np.ones(N)
 Dprime = np.array([[0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0]])
-Bprime = np.array([[[0.01, 0.0, 0.0],
-                   [0.02, 0.0, 0.0],
-                   [0.03, 0.0, 0.0]]])
+Bprime = np.zeros((N, 3, 3*N))
+for j in range(N):
+    Bprime[j,0,3*j] = 0.01
+    Bprime[j,1,3*j] = 0.02
+    Bprime[j,2,3*j] = 0.03
 
 # lattice constants
 a = 1
 k_arr = np.linspace(-np.pi/(N*a), np.pi/(N*a), num=100)
 
-k_arr = np.linspace(0.45, 0.55, num=1)
+k_arr = np.linspace(0.45, 0.55, num=100)
 ylim = [0.20, 0.30]
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -123,6 +125,7 @@ def Dz_matrix(k):
 def Dprime_tensor(k):
     pass
 
+
 def Psi(k, eps_k):
     s = 0
     for beta in range(3):
@@ -176,10 +179,10 @@ def create_Tmatrix(k):
                     np.conjugate((Bprime[j1,0,beta]+1j*Bprime[j1,1,beta]) *
                                  eps_arr[beta,lambd])
                 Tmatrix[5*N+lambd,4*N+j1] -= 0.5 * mu_B*g*np.sqrt(0.25*hbar*S[j1]) * \
-                    (Bprime[j1,0,beta]-1j*Bprime[j1,1,beta])*eps_arr[lambd,beta]
+                    (Bprime[j1,0,beta]-1j*Bprime[j1,1,beta])*eps_arr[beta,lambd]
                 Tmatrix[4*N+j1,5*N+lambd] -= 0.5 * mu_B*g*np.sqrt(0.25*hbar*S[j1]) * \
                     np.conjugate((Bprime[j1,0,beta]-1j*Bprime[j1,1,beta]) *
-                                 eps_arr[lambd,beta])
+                                 eps_arr[beta,lambd])
                 for j2 in range(N):
                     pass
 
@@ -207,9 +210,10 @@ def create_Umatrix(k):
         for lambd in range(3*N):
             for j1 in range(N):
                 Umatrix[j1,5*N+lambd] -= mu_B*g*np.sqrt(0.25*hbar*S) * \
-                    (Bprime[j1,0,beta]+1j*Bprime[j1,1,beta])*eps_arr[lambd,beta]
-                Umatrix[5*N+lambd,j1] -= mu_B*g*np.sqrt(0.25*hbar*S) * \
-                    (Bprime[j1,0,beta]+1j*Bprime[j1,1,beta])*eps_arr[lambd,beta]
+                    (Bprime[j1,0,beta]+1j*Bprime[j1,1,beta])*eps_arr[beta,lambd]
+                Umatrix[N+lambd,4*N+j1] -= mu_B*g*np.sqrt(0.25*hbar*S) * \
+                    np.conjugate((Bprime[j1,0,beta]-1j*Bprime[j1,1,beta]) * \
+                                 eps_arr[beta,lambd])
 
     return Umatrix
 
@@ -226,7 +230,8 @@ def dispersion_relation(k_arr):
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(k_arr, phonon_energy(k_arr), color="darkblue")
+    for j in range(3):
+        ax.plot(k_arr, phonon_energy(k_arr, j), color="darkblue")
     ax.plot(k_arr, magnon_energy(k_arr), color="darkblue")
     for i in range(len(energies)//2):
         ax.plot(k_arr, np.real(energies[i,:]), '--', color="orange")
@@ -239,12 +244,12 @@ def dispersion_relation(k_arr):
     fig.tight_layout()
     fig.savefig("img/magnon_polarons_with_base.png")
 
-    # plt.show()
+    plt.show()
     plt.close(fig)
 
 
-def phonon_energy(k):
-    return hbar*Omega[0,0]*np.abs(np.sin(0.5*k_arr*a))
+def phonon_energy(k, j=0):
+    return hbar*Omega[j,j]*np.abs(np.sin(0.5*k_arr*a))
 
 def magnon_energy(k):
     return 2*J*S*(1-np.cos(k*a)) - 2*Dz*S*np.sin(k*a) + Bz
