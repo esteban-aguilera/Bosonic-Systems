@@ -40,7 +40,7 @@ Bprime = np.array([[0.01, 0.0, 0.0],
 a = 1
 k_arr = np.linspace(-np.pi/a, np.pi/a, num=100)
 
-k_arr = np.linspace(0.45, 0.55, num=100)
+k_arr = np.linspace(0.45, 0.55, num=3)
 ylim = [0.20, 0.30]
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -80,21 +80,21 @@ def create_Tmatrix(k):
     w = 2*J*S*(1-np.cos(k*a)) - 2*Dz*S*np.sin(k*a) + mu_B*g*Bz
 
     # magnon terms
-    Tmatrix[0,0] = w
-    Tmatrix[4,4] = w
+    Tmatrix[0,0] += w
+    Tmatrix[4,4] += w
 
     # phonon terms
     for lambd in range(1,4):
-        Tmatrix[lambd,lambd] = u + v[lambd-1]
-        Tmatrix[4+lambd,4+lambd] = u + v[lambd-1]
+        Tmatrix[lambd,lambd] += u + v[lambd-1]
+        Tmatrix[4+lambd,4+lambd] += u + v[lambd-1]
 
     # magnon-phonon interaction
     for lambd in range(1,4):
-        Tmatrix[0,lambd] = 0.5*np.conjugate(Psi(k,vecs[:,lambd-1]))
-        Tmatrix[lambd,0] = 0.5*Psi(k,vecs[:,lambd-1])
+        Tmatrix[0,lambd] += 0.5*np.conjugate(Psi(k,vecs[:,lambd-1]))
+        Tmatrix[lambd,0] += 0.5*Psi(k,vecs[:,lambd-1])
 
-        Tmatrix[4,4+lambd] = 0.5*np.conjugate(Psi(k,vecs[:,lambd-1]))
-        Tmatrix[4+lambd,4] = 0.5*Psi(k,vecs[:,lambd-1])
+        Tmatrix[4,4+lambd] += 0.5*np.conjugate(Psi(k,vecs[:,lambd-1]))
+        Tmatrix[4+lambd,4] += 0.5*Psi(k,vecs[:,lambd-1])
 
     return Tmatrix
 
@@ -113,13 +113,13 @@ def create_Umatrix(k):
 
     # phonon terms
     for lambd in range(1,4):
-        Umatrix[lambd,4+lambd] = -u + v[lambd-1]
-        Umatrix[4+lambd,lambd] = -u + v[lambd-1]
+        Umatrix[lambd,4+lambd] += -u + v[lambd-1]
+        Umatrix[4+lambd,lambd] += -u + v[lambd-1]
 
     # magnon-phonon interaction
     for lambd in range(1,4):
-        Umatrix[0,4+lambd] = np.conjugate(Psi(k,vecs[:,lambd-1]))
-        Umatrix[0+lambd,4] = np.conjugate(Psi(k,vecs[:,lambd-1]))
+        Umatrix[0,4+lambd] += np.conjugate(Psi(k,vecs[:,lambd-1]))
+        Umatrix[0+lambd,4] += np.conjugate(Psi(k,vecs[:,lambd-1]))
 
     return Umatrix
 

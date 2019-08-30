@@ -57,16 +57,16 @@ def create_Tmatrix(k):
     # alpha = {a{k}, c{k}, a{-k}, c{-k}}
     Tmatrix = np.zeros((4, 4), dtype=complex)
 
-    Tmatrix[0,0] = 2*J*S*(1-np.cos(k*a)) - 2*Dz*S*np.sin(k*a) + mu_B*g*Bz
-    Tmatrix[1,1] = hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
-    Tmatrix[2,2] = 2*J*S*(1-np.cos(k*a)) - 2*Dz*S*np.sin(k*a) + mu_B*g*Bz
-    Tmatrix[3,3] = hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
+    Tmatrix[0,0] += 2*J*S*(1-np.cos(k*a)) - 2*Dz*S*np.sin(k*a) + mu_B*g*Bz
+    Tmatrix[1,1] += hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
+    Tmatrix[2,2] += 2*J*S*(1-np.cos(k*a)) - 2*Dz*S*np.sin(k*a) + mu_B*g*Bz
+    Tmatrix[3,3] += hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
 
-    Tmatrix[0,1] = 0.5*np.conjugate(psi(k))
-    Tmatrix[1,0] = 0.5*psi(k)
+    Tmatrix[0,1] += 0.5*np.conjugate(psi(k))
+    Tmatrix[1,0] += 0.5*psi(k)
 
-    Tmatrix[2,3] = 0.5*np.conjugate(psi(k))
-    Tmatrix[3,2] = 0.5*psi(k)
+    Tmatrix[2,3] += 0.5*np.conjugate(psi(k))
+    Tmatrix[3,2] += 0.5*psi(k)
 
     return Tmatrix
 
@@ -75,11 +75,11 @@ def create_Umatrix(k):
     # alpha = {a{k}, c{k}, a{-k}, c{-k}}
     Umatrix = np.zeros((4, 4), dtype=complex)
 
-    Umatrix[1,3] = -hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
-    Umatrix[3,1] = -hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
+    Umatrix[1,3] += -hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
+    Umatrix[3,1] += -hbar/(4*m) + hbar*m*omega**2*(1-np.cos(k*a))/2
 
-    Umatrix[0,3] = np.conjugate(psi(k))
-    Umatrix[1,2] = np.conjugate(psi(k))
+    Umatrix[0,3] += np.conjugate(psi(k))
+    Umatrix[1,2] += np.conjugate(psi(k))
 
     return Umatrix
 
