@@ -14,7 +14,6 @@ os.chdir("..")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 N = 2
 
-
 S = np.ones(N)
 J = 1
 Dz = 0
@@ -63,18 +62,18 @@ def create_Tmatrix(k):
     Tmatrix = np.zeros((2*N, 2*N), dtype=complex)
 
     for j1 in range(N):
+        Tmatrix[j1,j1] += S[j1]*Bz[j1]
+        Tmatrix[N+j1,N+j1] += S[j1]*Bz[j1]
         for j2 in range(N):
-            Tmatrix[j1,j1] += 0.5*np.sqrt(S[j1]*S[j2])*Jq(0,j1,j2)
-            Tmatrix[j2,j2] += 0.5*np.sqrt(S[j1]*S[j2])*Jq(0,j1,j2)
+            Tmatrix[j1,j1] += 0.5*S[j2]*Jq(0,j1,j2)
+            Tmatrix[j2,j2] += 0.5*S[j1]*Jq(0,j1,j2)
             Tmatrix[j1,j2] -= 0.5*np.sqrt(S[j1]*S[j2])*(Jq(k,j1,j2) + Jq(-k,j2,j1))
             Tmatrix[j1,j2] -= 0.5j*np.sqrt(S[j1]*S[j2])*(Dq(k,j1,j2) - Dq(-k,j2,j1))
-            Tmatrix[j1,j2] += Bz[j1]*(j1 == j2)
 
-            Tmatrix[N+j1,N+j1] += 0.5*np.sqrt(S[j1]*S[j2])*Jq(0,j1,j2)
-            Tmatrix[N+j2,N+j2] += 0.5*np.sqrt(S[j1]*S[j2])*Jq(0,j1,j2)
-            Tmatrix[N+j1,N+j2] -= 0.5*np.sqrt(S[j1]*S[j2])*(Jq(k,j1,j2) + Jq(-k,j2,j1))
-            Tmatrix[N+j1,N+j2] -= 0.5j*np.sqrt(S[j1]*S[j2])*(Dq(k,j1,j2) - Dq(-k,j1,j2))
-            Tmatrix[N+j1,N+j2] += Bz[j1]*(j1 == j2)
+            Tmatrix[N+j1,N+j1] += 0.5*S[j2]*Jq(0,j1,j2)
+            Tmatrix[N+j2,N+j2] += 0.5*S[j1]*Jq(0,j1,j2)
+            Tmatrix[N+j1,N+j2] -= 0.5*np.sqrt(S[j1]*S[j2])*(Jq(-k,j1,j2) + Jq(k,j2,j1))
+            Tmatrix[N+j1,N+j2] -= 0.5j*np.sqrt(S[j1]*S[j2])*(Dq(-k,j1,j2) - Dq(k,j1,j2))
 
     return Tmatrix
 
@@ -105,8 +104,8 @@ def dispersion_relation(k_arr):
     plt.close(fig)
 
 
-def analytical_energies(k):
-    return 2*J*S*(1-np.cos(k*a)) - 2*Dz*S*np.sin(k*a) + Bz
+def analytical_energies(k, j=0):
+    return 2*J*S[j]*(1-np.cos(k*a)) - 2*Dz*S[j]*np.sin(k*a) + Bz[j]
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
