@@ -13,14 +13,14 @@ os.chdir("..")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Constants
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-N = 1  # number of sites per unit cell
+N = 2  # number of sites per unit cell
 
 # phonon constants
 hbar = 1
 m = 1 * np.ones(N)
-Omega = np.array([[2.0, 0.0, 0.0],
-                  [0.0, 1.0, 0.0],
-                  [0.0, 0.0, 1.0]])
+Phi = np.array([[1.0, 0.0, 0.0],
+                [0.0, 2.0, 0.0],
+                [0.0, 0.0, 3.0]])
 
 # magnon constants
 mu_B = 1
@@ -28,7 +28,7 @@ g = 1
 S = 1 * np.ones(N)
 J = 1
 Dz = 0
-Bz = 0 * np.ones(N)
+Bz = 0*np.linspace(0, 1, num=N)
 
 # magnon polarons constants
 Dprime = np.array([[0.0, 0.0, 0.0],
@@ -44,8 +44,8 @@ for j in range(N):
 a = 1
 k_arr = np.linspace(-np.pi/(N*a), np.pi/(N*a), num=100)
 
-k_arr = np.linspace(0.45, 0.55, num=100)
-ylim = [0.20, 0.30]
+k_arr = np.linspace(0.4, 1.1, num=1000)
+ylim = [0.1, 1]
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # main
@@ -57,6 +57,13 @@ def main():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Functions
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+def show_matrix(X):
+    plt.imshow(np.abs(X))
+    plt.grid()
+    plt.colorbar()
+    plt.show()
+
+
 def order_eig(X):
     vals, vecs = np.linalg.eig(X)
     i_arr = np.argsort(vals)
@@ -70,19 +77,19 @@ def Phi_matrix(k):
     """
     matrix = np.zeros((3*N, 3*N), dtype=complex)
 
-    for j1 in range(0,3*N,3):
-        for j2 in range(0,3*N,3):
+    for j1 in range(0,N):
+        for j2 in range(0,N):
             if(j1 == j2):
-                matrix[j1:j1+3, j2:j2+3] += 2 * Omega / np.sqrt(m[j1//3]*m[j2//3])
-            if(j1-3 == j2):
-                matrix[j1:j1+3, j2:j2+3] -= Omega / np.sqrt(m[j1//3]*m[j2//3])
-            if(j1 == j2-3):
-                matrix[j1:j1+3, j2:j2+3] -= Omega / np.sqrt(m[j1//3]*m[j2//3])
-            if(j1 == 0 and j2 == 3*N-3):
-                matrix[j1:j1+3, j2:j2+3] -= Omega / np.sqrt(m[j1//3]*m[j2//3]) * \
+                matrix[3*j1:3*j1+3, 3*j2:3*j2+3] += 2 * Phi / np.sqrt(m[j1]*m[j2])
+            if(j1-1 == j2):
+                matrix[3*j1:3*j1+3, 3*j2:3*j2+3] -= Phi / np.sqrt(m[j1]*m[j2])
+            if(j1 == j2-1):
+                matrix[3*j1:3*j1+3, 3*j2:3*j2+3] -= Phi / np.sqrt(m[j1]*m[j2])
+            if(j1 == 0 and j2 == N-1):
+                matrix[3*j1:3*j1+3, 3*j2:3*j2+3] -= Phi / np.sqrt(m[j1]*m[j2]) * \
                     np.exp(-1j*k*N*a)
-            if(j1 == 3*N-3 and j2 == 0):
-                matrix[j1:j1+3, j2:j2+3] -= Omega / np.sqrt(m[j1//3]*m[j2//3]) * \
+            if(j1 == N-1 and j2 == 0):
+                matrix[3*j1:3*j1+3, 3*j2:3*j2+3] -= Phi / np.sqrt(m[j1]*m[j2]) * \
                     np.exp(1j*k*N*a)
 
     return matrix
@@ -126,43 +133,33 @@ def Dprime_tensor(k):
     pass
 
 
-def Psi(k, eps_k):
-    s = 0
-    for beta in range(3):
-        s += np.sqrt(0.25*hbar*S) * (
-            S*np.abs(np.exp(1j*k*a)-1)**2*(1j*Dprime[0,beta]+Dprime[1,beta]) -
-            mu_B*g*(Bprime[0,beta]-1j*Bprime[1,beta])
-        )*eps_k[beta]
-    return s
-
-
 def create_Tmatrix(k):
     # alpha = [a{k,1...N}, c{k,1...3*N}, a{-k,1...N}, c{-k,1...3*N}]
     Tmatrix = np.zeros((8*N, 8*N), dtype=complex)
 
-    phi, eps_arr = order_eig(Phi_matrix(k))
+    phi, eps_arr = order_eig(Phi_matrix(-k))
     Jk, J0 = J_matrix(k), J_matrix(0)
     Dk, D0 = Dz_matrix(k), Dz_matrix(0)
     Dprime_k, Dprime_0 = Dprime_tensor(k), Dprime_tensor(0)
 
     # magnon terms
     for j1 in range(N):
+        Tmatrix[j1,j1] += mu_B*g*S[j1]*Bz[j1]
+        Tmatrix[4*N+j1,4*N+j1] += mu_B*g*S[j1]*Bz[j1]
         for j2 in range(N):
-            Tmatrix[j1,j1] += 0.5*np.sqrt(S[j1]*S[j2]) * J0[j1,j2]
-            Tmatrix[j2,j2] += 0.5*np.sqrt(S[j1]*S[j2]) * J0[j1,j2]
+            Tmatrix[j1,j1] += 0.5*S[j2] * J0[j1,j2]
+            Tmatrix[j2,j2] += 0.5*S[j1] * J0[j1,j2]
             Tmatrix[j1,j2] -= 0.5*np.sqrt(S[j1]*S[j2]) * \
-                (Jk[j1,j2] + np.conjugate(Jk[j1,j2]))
+                (Jk[j1,j2] + np.conjugate(Jk[j2,j1]))
             Tmatrix[j1,j2] -= 0.5j*np.sqrt(S[j1]*S[j2]) * \
-                (Dk[j1,j2] - np.conjugate(Dk[j1,j2]))
-            Tmatrix[j1,j2] += Bz[j1] * (j1 == j2)
+                (Dk[j1,j2] - np.conjugate(Dk[j2,j1]))
 
-            Tmatrix[4*N+j1,4*N+j1] += 0.5*np.sqrt(S[j1]*S[j2]) * J0[j1,j2]
-            Tmatrix[4*N+j2,4*N+j2] += 0.5*np.sqrt(S[j1]*S[j2]) * J0[j1,j2]
+            Tmatrix[4*N+j1,4*N+j1] += 0.5*S[j2] * J0[j1,j2]
+            Tmatrix[4*N+j2,4*N+j2] += 0.5*S[j1] * J0[j1,j2]
             Tmatrix[4*N+j1,4*N+j2] -= 0.5*np.sqrt(S[j1]*S[j2]) * \
-                (Jk[j1,j2] + np.conjugate(Jk[j1,j2]))
+                (np.conjugate(Jk[j1,j2]) + Jk[j2,j1])
             Tmatrix[4*N+j1,4*N+j2] -= 0.5j*np.sqrt(S[j1]*S[j2]) * \
-                (Dk[j1,j2] - np.conjugate(Dk[j1,j2]))
-            Tmatrix[4*N+j1,4*N+j2] += Bz[j1] * (j1 == j2)
+                (np.conjugate(Dk[j1,j2]) - Dk[j2,j1])
 
     # phonon terms
     for lambd in range(3*N):
@@ -209,12 +206,13 @@ def create_Umatrix(k):
     for beta in range(3*N):
         for lambd in range(3*N):
             for j1 in range(N):
-                Umatrix[j1,5*N+lambd] -= mu_B*g*np.sqrt(0.25*hbar*S) * \
+                Umatrix[j1,5*N+lambd] -= mu_B*g*np.sqrt(0.25*hbar*S[j1]) * \
                     (Bprime[j1,0,beta]+1j*Bprime[j1,1,beta])*eps_arr[beta,lambd]
-                Umatrix[N+lambd,4*N+j1] -= mu_B*g*np.sqrt(0.25*hbar*S) * \
+                Umatrix[N+lambd,4*N+j1] -= mu_B*g*np.sqrt(0.25*hbar*S[j1]) * \
                     np.conjugate((Bprime[j1,0,beta]-1j*Bprime[j1,1,beta]) * \
                                  eps_arr[beta,lambd])
 
+    # show_matrix(Umatrix)
     return Umatrix
 
 
@@ -230,11 +228,11 @@ def dispersion_relation(k_arr):
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    for j in range(3):
-        ax.plot(k_arr, phonon_energy(k_arr, j), color="darkblue")
-    ax.plot(k_arr, magnon_energy(k_arr), color="darkblue")
+    # for j in range(3):
+    #     ax.plot(k_arr, phonon_energy(k_arr, j), color="darkblue")
+    # ax.plot(k_arr, magnon_energy(k_arr), color="darkblue")
     for i in range(len(energies)//2):
-        ax.plot(k_arr, np.real(energies[i,:]), '--', color="orange")
+        ax.plot(k_arr, np.real(energies[i,:]), color="orange")
 
     try:
         ax.set_ylim(ylim)
@@ -249,10 +247,10 @@ def dispersion_relation(k_arr):
 
 
 def phonon_energy(k, j=0):
-    return hbar*Omega[j,j]*np.abs(np.sin(0.5*k_arr*a))
+    return hbar*np.sqrt(Phi[j,j])*np.abs(np.sin(0.5*k_arr*a))
 
-def magnon_energy(k):
-    return 2*J*S*(1-np.cos(k*a)) - 2*Dz*S*np.sin(k*a) + Bz
+def magnon_energy(k, j=0):
+    return 2*J*S[j]*(1-np.cos(k*a)) - 2*Dz*S[j]*np.sin(k*a) + Bz[j]
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
