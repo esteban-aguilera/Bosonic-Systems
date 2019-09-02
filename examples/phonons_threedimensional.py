@@ -31,7 +31,7 @@ def main():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def create_Tmatrix(k):
     u = hbar/(4*m)
-    v = hbar/4 * (np.exp(1j*k*a)-1)*(np.exp(-1j*k*a)-1) * phi
+    v = hbar/4 * np.abs(np.exp(1j*k*a)-1)**2 * phi
     Tmatrix = np.zeros((2*3, 2*3), dtype=complex)
 
     # alpha = {c{k,1}, c{k,2}, c{k,3}, c{-k,1}, c{-k,2}, c{-k,3}}
@@ -44,7 +44,7 @@ def create_Tmatrix(k):
 
 def create_Umatrix(k):
     u = hbar/(4*m)
-    v = hbar/4 * (np.exp(1j*k*a)-1)*(np.exp(-1j*k*a)-1) * phi
+    v = hbar/4 * np.abs(np.exp(1j*k*a)-1)**2 * phi
     Umatrix = np.zeros((2*3, 2*3), dtype=complex)
 
     # alpha = {a{k}, a{-k}}
