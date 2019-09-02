@@ -73,7 +73,7 @@ def create_Tmatrix(k):
             Tmatrix[N+j1,N+j1] += 0.5*S[j2]*Jq(0,j1,j2)
             Tmatrix[N+j2,N+j2] += 0.5*S[j1]*Jq(0,j1,j2)
             Tmatrix[N+j1,N+j2] -= 0.5*np.sqrt(S[j1]*S[j2])*(Jq(-k,j1,j2) + Jq(k,j2,j1))
-            Tmatrix[N+j1,N+j2] -= 0.5j*np.sqrt(S[j1]*S[j2])*(Dq(-k,j1,j2) - Dq(k,j1,j2))
+            Tmatrix[N+j1,N+j2] -= 0.5j*np.sqrt(S[j1]*S[j2])*(Dq(-k,j1,j2) - Dq(k,j2,j1))
 
     return Tmatrix
 
