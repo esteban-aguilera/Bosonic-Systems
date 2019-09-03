@@ -2,8 +2,12 @@
 # !/usr/bin/env python
 
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 import sys
+
+from matplotlib.collections import LineCollection
+from matplotlib.colors import ListedColormap, BoundaryNorm
 
 sys.path.insert(0, "..")
 from BosonicSystem import *
@@ -14,6 +18,7 @@ os.chdir("..")
 # Constants
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 N = 2  # number of sites per unit cell
+a = 1  # interatomic distance
 
 # phonon constants
 hbar = 1
@@ -23,12 +28,15 @@ Phi = np.array([[1.0, 0.0, 0.0],
                 [0.0, 0.0, 3.0]])
 
 # magnon constants
+R = a * np.arange(0, N)
 mu_B = 1
 g = 1
 S = 1 * np.ones(N)
 J = 1
 Dz = 0
-Bz = 0*np.linspace(0, 1, num=N)
+Bz = np.zeros(N)
+Bz = np.linspace(0,1,num=N)
+Bz = np.sin(2*np.pi/(N*a) * R)
 
 # magnon polarons constants
 Dprime = np.array([[0.0, 0.0, 0.0],
@@ -37,15 +45,14 @@ Dprime = np.array([[0.0, 0.0, 0.0],
 Bprime = np.zeros((N, 3, 3*N))
 for j in range(N):
     Bprime[j,0,3*j] = 0.01
-    Bprime[j,1,3*j] = 0.02
+    Bprime[j,1,3*j+1] = 0.02
     Bprime[j,2,3*j] = 0.03
 
 # lattice constants
-a = 1
-k_arr = np.linspace(-np.pi/(N*a), np.pi/(N*a), num=100)
+k_arr = np.linspace(-np.pi/(N*a), np.pi/(N*a), num=300)
 
-k_arr = np.linspace(0.4, 1.1, num=1000)
-ylim = [0.1, 1]
+k_arr = np.linspace(0.46, 1.1, num=100)
+ylim = [0.3, 1]
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # main
@@ -220,25 +227,39 @@ def dispersion_relation(k_arr):
     num_k = k_arr.shape[0]
 
     energies = np.zeros((2*8*N, num_k), dtype=complex)
+    z = np.zeros((16*N, num_k))
     U = [None for _ in range(num_k)]
 
     for i, k in enumerate(k_arr):
         bosonic_system = BosonicSystem(create_Tmatrix(k), create_Umatrix(k))
         energies[:,i], U[i] = bosonic_system.diagonalize()
+        for j in range(len(energies[:,i])):
+            for k in range(4*N):
+                prob = np.sum(np.abs(U[i][0:N,j])**2) + np.sum(np.abs(U[i][4*N:5*N,j])**2)
+                if(prob > z[j,i]):
+                    z[j,i] = prob
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    # for j in range(3):
-    #     ax.plot(k_arr, phonon_energy(k_arr, j), color="darkblue")
-    # ax.plot(k_arr, magnon_energy(k_arr), color="darkblue")
-    for i in range(len(energies)//2):
-        ax.plot(k_arr, np.real(energies[i,:]), color="orange")
+    for j in range(len(energies)//2):
+        x, y = k_arr, energies[j,:]
 
+        points = np.array([x, y]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+        norm = plt.Normalize(z.min(), z.max())
+        lc = LineCollection(segments, cmap='viridis', norm=norm)
+        lc.set_array(z[j,:])
+        line = ax.add_collection(lc)
+
+    ax.set_xlim(k_arr.min(), k_arr.max())
     try:
         ax.set_ylim(ylim)
     except:
-        pass
+        ax.set_ylim(0, energies.max())
+
     ax.grid()
+    fig.colorbar(line, ax=ax)
     fig.tight_layout()
     fig.savefig("img/magnon_polarons_with_base.png")
 
