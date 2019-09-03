@@ -242,7 +242,7 @@ def dispersion_relation(k_arr):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     for j in range(len(energies)//2):
-        x, y = k_arr, energies[j,:]
+        x, y = k_arr, np.abs(energies[j,:])
 
         points = np.array([x, y]).T.reshape(-1, 1, 2)
         segments = np.concatenate([points[:-1], points[1:]], axis=1)
