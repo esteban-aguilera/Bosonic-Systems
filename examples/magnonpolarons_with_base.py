@@ -17,7 +17,7 @@ os.chdir("..")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Constants
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-N = 2  # number of sites per unit cell
+N = 4  # number of sites per unit cell
 a = 12.376e-10  # interatomic distance
 
 # phonon constants
@@ -35,7 +35,7 @@ S = 20 * np.ones(N)
 J = 0.24
 Dz = 0
 Bz = np.zeros(N)
-Bz = 0.537 * np.ones(N)
+Bz = 1.32 * np.ones(N)
 # Bz = 0.1 * np.sin(2*np.pi/(N*a) * R)
 
 # magnon polarons constants
@@ -44,7 +44,7 @@ Dprime = np.array([[0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0]])
 Bprime = np.zeros((N, 3, 3*N))
 for j in range(N):
-    Bprime[j,0,3*j] = 1  # d(Bx)/dx
+    Bprime[j,0,3*j] = 1e-8 * 2*np.pi/(N*a)*np.sin(2*np.pi/(N*a) * R[j])  # d(Bx)/dx
     Bprime[j,1,3*j] = 0.0  # d(By)/dx
     Bprime[j,2,3*j] = 0.0  # d(Bz)/dx
 
@@ -59,8 +59,10 @@ for j in range(N):
 # lattice constants
 k_arr = np.linspace(-np.pi/(N*a), np.pi/(N*a), num=300)
 
-k_arr = np.linspace(1.1e8, 1.8e8, num=100)
-ylim = [1.2, 1.6]
+k_arr = np.linspace(1e7, np.pi/(N*a), num=500)
+
+# k_arr = np.linspace(1.1e8, 1.8e8, num=100)
+# ylim = [1.2, 1.6]
 
 # k_arr = np.linspace(0.99*np.pi/(N*a), np.pi/(N*a), num=100)
 # ylim = [10.7, 11]
@@ -208,12 +210,13 @@ def create_Umatrix(k):
         for j in range(N):
             w = np.sqrt(phi[lambd] / m)
             Bprime_term = np.sum(-mu_B*g*np.sqrt(hbar*S[j]/(4*m*w)) * \
-                (Bprime[j,0,:]+1j*Bprime[j,1,:])*eps_arr[:,lambd]
+                (Bprime[j,0,:]+1j*Bprime[j,1,:])*np.conjugate(eps_arr[:,lambd])
             )
 
             Umatrix[j,4*N+lambd] += Bprime_term
             Umatrix[4*N+lambd,j] += Bprime_term
 
+    Umatrix[np.abs(Umatrix) < 1e-10] = 0
     return Umatrix
 
 
@@ -240,7 +243,7 @@ def dispersion_relation(k_arr):
         segments = np.concatenate([points[:-1], points[1:]], axis=1)
 
         norm = plt.Normalize(vmin=0, vmax=1)
-        lc = LineCollection(segments, cmap='viridis', norm=norm)
+        lc = LineCollection(segments, cmap='brg', norm=norm)
         lc.set_array(z[j,:])
         line = ax.add_collection(lc)
 

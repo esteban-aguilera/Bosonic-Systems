@@ -3,6 +3,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.sparse.linalg import eigs as sparse_eigs
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -36,6 +37,12 @@ class BosonicSystem:
     def diagonalize(self):
         paraH = np.dot(self.J, self.H)
         energies, U = np.linalg.eig(paraH)
+        i_arr = np.argsort(np.real(energies))[::-1]
+        return energies[i_arr], U[:,i_arr]
+
+    def sparse_diagonalization(self):
+        paraH = np.dot(self.J, self.H)
+        energies, U = sparse_eigs(paraH, k=paraH.shape[0]-2)
         i_arr = np.argsort(np.real(energies))[::-1]
         return energies[i_arr], U[:,i_arr]
 
