@@ -8,6 +8,7 @@ import sys
 
 from matplotlib.collections import LineCollection
 from matplotlib.colors import ListedColormap, BoundaryNorm
+from scipy.integrate import simps
 
 sys.path.insert(0, "..")
 from BosonicSystem import *
@@ -17,7 +18,7 @@ os.chdir("..")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Constants
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-N = 1  # number of sites per unit cell
+N = 10  # number of sites per unit cell
 a = 12.376e-10  # interatomic distance
 
 # phonon constants
@@ -31,13 +32,11 @@ Phi = m * np.diag(2*phonon_speeds/a)**2
 R = a * np.arange(0, N)
 mu_B = 5.788e-2
 g = 2
-S = 20 * np.ones(N)
+S = 20
 J = 0.24
 Dz = 0
 Bz = np.zeros(N)
-Bz = 0.1 * np.ones(N)  # 0.36
-# Bz = 1.25 * np.ones(N)
-# Bz = 0.1 * np.cos(2*np.pi/(N*a) * R)
+Bz = 0.8 * np.ones(N)  # 1.314
 
 # magnon polarons constants
 Dprime = np.array([[0.0, 0.0, 0.0],
@@ -45,36 +44,36 @@ Dprime = np.array([[0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0]])
 Bprime = np.zeros((N, 3, 3*N))
 for j in range(N):
-    Bprime[j,0,3*j] = 0.0 # 1e-8 * 2*np.pi/(N*a)*np.sin(2*np.pi/(N*a) * R[j])  # d(Bx)/dx
+    Bprime[j,0,3*j] = 1e-8 * 2*np.pi/(N*a)*np.cos(2*np.pi/(N*a)*R[j])  # d(Bx)/dx
     Bprime[j,1,3*j] = 0.0  # d(By)/dx
     Bprime[j,2,3*j] = 0.0  # d(Bz)/dx
 
-    Bprime[j,0,3*j+1] = 1.0 # d(Bx)/dy
+    Bprime[j,0,3*j+1] = 0.0 # d(Bx)/dy
     Bprime[j,1,3*j+1] = 0.0  # d(By)/dy
     Bprime[j,2,3*j+1] = 0.0  # d(Bz)/dy
 
-    Bprime[j,0,3*j+2] = 1.0  # d(Bx)/dz
+    Bprime[j,0,3*j+2] = 0.0  # d(Bx)/dz
     Bprime[j,1,3*j+2] = 0.0  # d(By)/dz
     Bprime[j,2,3*j+2] = 0.0  # d(Bz)/dz
 
+num_k = 1000
+# 1Bz
+klim = [-np.pi/(N*a), np.pi/(N*a)]
+
+# positive Bz
+klim = [1e8, np.pi/(N*a)]
+
+# zoom
+# klim = [1.15e9, 1.20e9]
+# ylim = [11, 12]
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # main
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def main():
-    k_arr = np.linspace(-np.pi/(N*a), np.pi/(N*a), num=300)
+    k_arr = np.linspace(*klim, num=num_k)
 
-    k_arr = np.linspace(0.5e8, np.pi/(N*a), num=1000)
-    # ylim = [0.0, 5]
-
-    # k_arr = np.linspace(1.1e8, 1.8e8, num=100)
-    # ylim = [1.2, 1.6]
-
-    # k_arr = np.linspace(0.9*np.pi/(N*a), np.pi/(N*a), num=100)
-    # ylim = [4, 5.5]
-
-
-    num_k, dim = k_arr.shape[0], 16*N
+    dim = 16*N
     dk = k_arr[1] - k_arr[0]
 
     energies = np.zeros((num_k,dim), dtype=complex)
@@ -105,7 +104,7 @@ def main():
     cbar.ax.set_yticklabels(["Ph", "M"])
 
     ax.grid()
-    ax.set_xlim(k_arr.min(), k_arr.max())
+    ax.set_xlim(klim)
     try:
         ax.set_ylim(ylim)
     except:
@@ -116,7 +115,7 @@ def main():
     plt.show()
     plt.close(fig)
 
-    # # plot group velocity
+    # plot group velocity
     # fig = plt.figure()
     # ax = fig.add_subplot(111)
     # for j in range(dim):
@@ -130,25 +129,157 @@ def main():
     # ax.grid()
     # fig.tight_layout()
     # fig.savefig("img/mp_group_velocity.png")
-    # plt.show()
+    # # plt.show()
     # plt.close(fig)
+
+
+def magnonPolarons_presence():
+    global N, R, Bprime, Bz
+
+    num_arr = np.arange(2, 10)
+    B0_arr = np.linspace(0.1, .2, num=10)
+
+    s = np.zeros((num_arr.shape[0], B0_arr.shape[0]))
+    try:
+        for c1, num_sites in enumerate(num_arr):
+            N = num_sites
+            R = a * np.arange(0, N)
+            Bprime = np.zeros((N, 3, 3*N))
+            for j in range(N):
+                Bprime[j,0,3*j] = 3e-9 * 2*np.pi/(N*a)*np.sin(2*np.pi/(N*a)*R[j])  # d(Bx)/dx
+                Bprime[j,1,3*j] = 0.0  # d(By)/dx
+                Bprime[j,2,3*j] = 0.0  # d(Bz)/dx
+
+                Bprime[j,0,3*j+1] = 0.0  # d(Bx)/dy
+                Bprime[j,1,3*j+1] = 0.0  # d(By)/dy
+                Bprime[j,2,3*j+1] = 0.0  # d(Bz)/dy
+
+                Bprime[j,0,3*j+2] = 0.0  # d(Bx)/dz
+                Bprime[j,1,3*j+2] = 0.0  # d(By)/dz
+                Bprime[j,2,3*j+2] = 0.0  # d(Bz)/dz
+
+            klim = [1e8, np.pi/(N*a)]
+            k_arr = np.linspace(*klim, num=num_k)
+            dk = k_arr[1] - k_arr[0]
+
+            dim = 16*N
+            energies = np.zeros((num_k,dim), dtype=complex)
+            U = np.zeros((num_k,dim,dim), dtype=complex)
+            z = np.zeros((num_k,dim))
+            for c2, B0 in enumerate(B0_arr):
+                Bz = B0 * np.ones(N)
+
+                for i, k in enumerate(k_arr):
+                    bosonic_system = BosonicSystem(create_Tmatrix(k), create_Umatrix(k))
+                    energies[i,:], U[i,:,:] = bosonic_system.diagonalize()
+                    for j in range(dim):
+                        z[i,j] = np.sum(np.abs(U[i,:N,j])**2) + np.sum(np.abs(U[i,4*N:5*N,j])**2) + \
+                            np.sum(np.abs(U[i,8*N:9*N,j])**2) + np.sum(np.abs(U[i,12*N:13*N,j])**2)
+
+                for j in range(dim):
+                    s[c1,c2] += simps(np.logical_and(0.4 < z[:,j], z[:,j] < 0.6), k_arr)
+    except:
+        print("Failed at: ", N, B0)
+
+    plt.imshow(np.transpose(np.log(s)), origin="bottom", aspect='auto',
+               extent=(num_arr[0], num_arr[-1]+1, B0_arr[0], B0_arr[-1]))
+    plt.grid()
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig("img/NvsBz.png")
+    plt.show()
 
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Functions
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-def show_matrix(X):
-    plt.imshow(np.imag(X))
-    plt.grid()
-    plt.colorbar()
-    plt.show()
+def create_Tmatrix(k):
+    # alpha = [a{k,1...N}, c{k,1...3*N}, c{-k,1...3*N}]
+    Tmatrix = np.zeros((8*N, 8*N), dtype=complex)
+
+    phi, eps_arr = order_eig(Phi_matrix(k))
+    Jk, J0 = J_matrix(k), J_matrix(0)
+    Dk, D0 = Dz_matrix(k), Dz_matrix(0)
+    Dprime_k, Dprime_0 = Dprime_tensor(k), Dprime_tensor(0)
+
+    # magnon terms
+    for j1 in range(N):
+        Tmatrix[j1,j1] += mu_B*g*S*Bz[j1]
+        Tmatrix[4*N+j1,4*N+j1] += mu_B*g*S*Bz[j1]
+        for j2 in range(N):
+            Tmatrix[j1,j1] += 0.5*S * J0[j1,j2]
+            Tmatrix[j2,j2] += 0.5*S * J0[j1,j2]
+            Tmatrix[j1,j2] -= 0.5*np.sqrt(S*S) * \
+                (Jk[j1,j2] + np.conjugate(Jk[j2,j1]))
+            Tmatrix[j1,j2] -= 0.5j*np.sqrt(S*S) * \
+                (Dk[j1,j2] - np.conjugate(Dk[j2,j1]))
+
+            Tmatrix[4*N+j1,4*N+j1] += 0.5*S * J0[j1,j2]
+            Tmatrix[4*N+j2,4*N+j2] += 0.5*S * J0[j1,j2]
+            Tmatrix[4*N+j1,4*N+j2] -= 0.5*np.sqrt(S*S) * \
+                (np.conjugate(Jk[j1,j2]) + Jk[j2,j1])
+            Tmatrix[4*N+j1,4*N+j2] -= 0.5j*np.sqrt(S*S) * \
+                (np.conjugate(Dk[j1,j2]) - Dk[j2,j1])
+
+    # phonon terms
+    for lambd in range(3*N):
+        w = np.sqrt(phi[lambd] / m)
+        Tmatrix[N+lambd,N+lambd] += hbar*w
+        Tmatrix[5*N+lambd,5*N+lambd] += hbar*w
+
+    # magnon-phonon interaction
+    for j in range(N):
+        for lambd in range(3*N):
+            w = np.sqrt(phi[lambd] / m)
+            Bterm = np.sum(-mu_B*g*np.sqrt(hbar*S/(4*m*w)) * \
+                (Bprime[j,0,:]+1j*Bprime[j,1,:])*eps_arr[:,lambd]
+            )
+            Bterm_c = np.sum(-mu_B*g*np.sqrt(hbar*S/(4*m*w)) * \
+                (Bprime[j,0,:]+1j*Bprime[j,1,:])*np.conjugate(eps_arr[:,lambd])
+            )
+
+            Tmatrix[j,N+lambd] += Bterm
+            Tmatrix[N+lambd,j] += np.conjugate(Bterm)
+
+            Tmatrix[4*N+j,5*N+lambd] += Bterm_c
+            Tmatrix[5*N+lambd,4*N+j] += np.conjugate(Bterm_c)
+
+    return Tmatrix
 
 
-def order_eig(X):
-    vals, vecs = np.linalg.eigh(X)
-    i_arr = np.argsort(vals)[::-1]
-    return vals[i_arr], vecs[:, i_arr]
+def create_Umatrix(k):
+    # alpha = [a{k,1...N}, c{k,1...3*N}, c{-k,1...3*N}]
+    Umatrix = np.zeros((8*N, 8*N), dtype=complex)
+
+    phi, eps_arr = order_eig(Phi_matrix(k))
+    Jk, J0 = J_matrix(k), J_matrix(0)
+    Dk, D0 = Dz_matrix(k), Dz_matrix(0)
+
+    # magnon terms
+    None
+
+    # phonon terms
+    None
+
+    # magnon-phonon interaction
+    for lambd in range(3*N):
+        for j in range(N):
+            w = np.sqrt(phi[lambd] / m)
+            Bterm = np.sum(-mu_B*g*np.sqrt(hbar*S/(4*m*w)) * \
+                (Bprime[j,0,:]+1j*Bprime[j,1,:])*np.conjugate(eps_arr[:,lambd])
+            )
+            Bterm_c = np.sum(-mu_B*g*np.sqrt(hbar*S/(4*m*w)) * \
+                (Bprime[j,0,:]+1j*Bprime[j,1,:])*eps_arr[:,lambd]
+            )
+
+            Umatrix[j,5*N+lambd] += 0.5*Bterm
+            Umatrix[5*N+lambd,j] += 0.5*Bterm
+
+            Umatrix[4*N+j,N+lambd] += 0.5*Bterm_c
+            Umatrix[N+lambd,4*N+j] += 0.5*Bterm_c
+
+    return Umatrix
 
 
 def Phi_matrix(k):
@@ -211,92 +342,17 @@ def Dprime_tensor(k):
     pass
 
 
-def create_Tmatrix(k):
-    # alpha = [a{k,1...N}, c{k,1...3*N}, c{-k,1...3*N}]
-    Tmatrix = np.zeros((8*N, 8*N), dtype=complex)
-
-    phi, eps_arr = order_eig(Phi_matrix(k))
-    Jk, J0 = J_matrix(k), J_matrix(0)
-    Dk, D0 = Dz_matrix(k), Dz_matrix(0)
-    Dprime_k, Dprime_0 = Dprime_tensor(k), Dprime_tensor(0)
-
-    # magnon terms
-    for j1 in range(N):
-        Tmatrix[j1,j1] += mu_B*g*S[j1]*Bz[j1]
-        Tmatrix[4*N+j1,4*N+j1] += mu_B*g*S[j1]*Bz[j1]
-        for j2 in range(N):
-            Tmatrix[j1,j1] += 0.5*S[j2] * J0[j1,j2]
-            Tmatrix[j2,j2] += 0.5*S[j1] * J0[j1,j2]
-            Tmatrix[j1,j2] -= 0.5*np.sqrt(S[j1]*S[j2]) * \
-                (Jk[j1,j2] + np.conjugate(Jk[j2,j1]))
-            Tmatrix[j1,j2] -= 0.5j*np.sqrt(S[j1]*S[j2]) * \
-                (Dk[j1,j2] - np.conjugate(Dk[j2,j1]))
-
-            Tmatrix[4*N+j1,4*N+j1] += 0.5*S[j2] * J0[j1,j2]
-            Tmatrix[4*N+j2,4*N+j2] += 0.5*S[j1] * J0[j1,j2]
-            Tmatrix[4*N+j1,4*N+j2] -= 0.5*np.sqrt(S[j1]*S[j2]) * \
-                (np.conjugate(Jk[j1,j2]) + Jk[j2,j1])
-            Tmatrix[4*N+j1,4*N+j2] -= 0.5j*np.sqrt(S[j1]*S[j2]) * \
-                (np.conjugate(Dk[j1,j2]) - Dk[j2,j1])
-
-    # phonon terms
-    for lambd in range(3*N):
-        w = np.sqrt(phi[lambd] / m)
-        Tmatrix[N+lambd,N+lambd] += hbar*w
-        Tmatrix[5*N+lambd,5*N+lambd] += hbar*w
-
-    # magnon-phonon interaction
-    for j in range(N):
-        for lambd in range(3*N):
-            w = np.sqrt(phi[lambd] / m)
-            Bterm = np.sum(-mu_B*g*np.sqrt(hbar*S[j]/(4*m*w)) * \
-                (Bprime[j,0,:]+1j*Bprime[j,1,:])*eps_arr[:,lambd]
-            )
-            Bterm_c = np.sum(-mu_B*g*np.sqrt(hbar*S[j]/(4*m*w)) * \
-                (Bprime[j,0,:]+1j*Bprime[j,1,:])*np.conjugate(eps_arr[:,lambd])
-            )
-
-            Tmatrix[j,N+lambd] += Bterm
-            Tmatrix[N+lambd,j] += np.conjugate(Bterm)
-
-            Tmatrix[4*N+j,5*N+lambd] += Bterm_c
-            Tmatrix[5*N+lambd,4*N+j] += np.conjugate(Bterm_c)
-
-    return Tmatrix
+def show_matrix(X):
+    plt.imshow(np.imag(X))
+    plt.grid()
+    plt.colorbar()
+    plt.show()
 
 
-def create_Umatrix(k):
-    # alpha = [a{k,1...N}, c{k,1...3*N}, c{-k,1...3*N}]
-    Umatrix = np.zeros((8*N, 8*N), dtype=complex)
-
-    phi, eps_arr = order_eig(Phi_matrix(k))
-    Jk, J0 = J_matrix(k), J_matrix(0)
-    Dk, D0 = Dz_matrix(k), Dz_matrix(0)
-
-    # magnon terms
-    None
-
-    # phonon terms
-    None
-
-    # magnon-phonon interaction
-    for lambd in range(3*N):
-        for j in range(N):
-            w = np.sqrt(phi[lambd] / m)
-            Bterm = np.sum(-mu_B*g*np.sqrt(hbar*S[j]/(4*m*w)) * \
-                (Bprime[j,0,:]+1j*Bprime[j,1,:])*np.conjugate(eps_arr[:,lambd])
-            )
-            Bterm_c = np.sum(-mu_B*g*np.sqrt(hbar*S[j]/(4*m*w)) * \
-                (Bprime[j,0,:]+1j*Bprime[j,1,:])*eps_arr[:,lambd]
-            )
-
-            Umatrix[j,5*N+lambd] += 0.5*Bterm
-            Umatrix[5*N+lambd,j] += 0.5*Bterm
-
-            Umatrix[4*N+j,N+lambd] += 0.5*Bterm_c
-            Umatrix[N+lambd,4*N+j] += 0.5*Bterm_c
-
-    return Umatrix
+def order_eig(X):
+    vals, vecs = np.linalg.eigh(X)
+    i_arr = np.argsort(vals)[::-1]
+    return vals[i_arr], vecs[:, i_arr]
 
 
 def phonon_energy(k, j=0, linear_dispersion=False):
@@ -307,7 +363,7 @@ def phonon_energy(k, j=0, linear_dispersion=False):
 
 
 def magnon_energy(k, j=0):
-    return 2*J*S[j]*(1-np.cos(k*a)) - 2*Dz*S[j]*np.sin(k*a) + Bz[j]
+    return 2*J*S*(1-np.cos(k*a)) - 2*Dz*S*np.sin(k*a) + Bz[j]
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -315,3 +371,4 @@ def magnon_energy(k, j=0):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 if __name__ == '__main__':
     main()
+    # magnonPolarons_presence()
