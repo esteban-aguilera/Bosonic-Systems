@@ -18,7 +18,7 @@ os.chdir("..")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Constants
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-N = 10  # number of sites per unit cell
+N = 8  # number of sites per unit cell
 a = 12.376e-10  # interatomic distance
 
 # phonon constants
@@ -36,7 +36,7 @@ S = 20
 J = 0.24
 Dz = 0
 Bz = np.zeros(N)
-Bz = 0.8 * np.ones(N)  # 1.314
+Bz = 2.2/(mu_B*g*S) * np.ones(N)  # 1.314
 
 # magnon polarons constants
 Dprime = np.array([[0.0, 0.0, 0.0],
@@ -61,7 +61,7 @@ num_k = 1000
 klim = [-np.pi/(N*a), np.pi/(N*a)]
 
 # positive Bz
-klim = [1e8, np.pi/(N*a)]
+klim = [1e7, np.pi/(N*a)]
 
 # zoom
 # klim = [1.15e9, 1.20e9]
@@ -71,6 +71,14 @@ klim = [1e8, np.pi/(N*a)]
 # main
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def main():
+    dispersion_relation()
+    # magnonPolarons_presence()
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Routines
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+def dispersion_relation():
     k_arr = np.linspace(*klim, num=num_k)
 
     dim = 16*N
@@ -107,8 +115,14 @@ def main():
     ax.set_xlim(klim)
     try:
         ax.set_ylim(ylim)
+        ax.text(0.97*klim[1], 0.97*ylim[1], "$B_z=%.3f$",
+            horizontalalignment='right', verticalalignment='top')
     except:
         ax.set_ylim(0, np.real(energies).max())
+        ax.text(0.97*klim[1], 0.97*np.real(energies).max(), "$B_z=%.3f$" % Bz[0],
+            horizontalalignment='right', verticalalignment='top',
+            bbox=dict(boxstyle='round', facecolor='white', alpha=1))
+
 
     fig.tight_layout()
     fig.savefig("img/mp_dispersion.png")
@@ -136,63 +150,61 @@ def main():
 def magnonPolarons_presence():
     global N, R, Bprime, Bz
 
-    num_arr = np.arange(2, 10)
-    B0_arr = np.linspace(0.1, .2, num=10)
+    num_arr = np.arange(2, 11)
+    B0_arr = np.linspace(0.1, 2, num=50)
 
     s = np.zeros((num_arr.shape[0], B0_arr.shape[0]))
-    try:
-        for c1, num_sites in enumerate(num_arr):
-            N = num_sites
-            R = a * np.arange(0, N)
-            Bprime = np.zeros((N, 3, 3*N))
-            for j in range(N):
-                Bprime[j,0,3*j] = 3e-9 * 2*np.pi/(N*a)*np.sin(2*np.pi/(N*a)*R[j])  # d(Bx)/dx
-                Bprime[j,1,3*j] = 0.0  # d(By)/dx
-                Bprime[j,2,3*j] = 0.0  # d(Bz)/dx
+    for c1, num_sites in enumerate(num_arr):
+        N = num_sites
+        R = a * np.arange(0, N)
+        Bprime = np.zeros((N, 3, 3*N))
+        for j in range(N):
+            Bprime[j,0,3*j] = 1e-8 * 2*np.pi/(N*a)*np.cos(2*np.pi/(N*a)*R[j])  # d(Bx)/dx
+            Bprime[j,1,3*j] = 0.0  # d(By)/dx
+            Bprime[j,2,3*j] = 0.0  # d(Bz)/dx
 
-                Bprime[j,0,3*j+1] = 0.0  # d(Bx)/dy
-                Bprime[j,1,3*j+1] = 0.0  # d(By)/dy
-                Bprime[j,2,3*j+1] = 0.0  # d(Bz)/dy
+            Bprime[j,0,3*j+1] = 0.0  # d(Bx)/dy
+            Bprime[j,1,3*j+1] = 0.0  # d(By)/dy
+            Bprime[j,2,3*j+1] = 0.0  # d(Bz)/dy
 
-                Bprime[j,0,3*j+2] = 0.0  # d(Bx)/dz
-                Bprime[j,1,3*j+2] = 0.0  # d(By)/dz
-                Bprime[j,2,3*j+2] = 0.0  # d(Bz)/dz
+            Bprime[j,0,3*j+2] = 0.0  # d(Bx)/dz
+            Bprime[j,1,3*j+2] = 0.0  # d(By)/dz
+            Bprime[j,2,3*j+2] = 0.0  # d(Bz)/dz
 
-            klim = [1e8, np.pi/(N*a)]
-            k_arr = np.linspace(*klim, num=num_k)
-            dk = k_arr[1] - k_arr[0]
+        klim = [1e8, np.pi/(N*a)]
+        k_arr = np.linspace(*klim, num=num_k)
+        dk = k_arr[1] - k_arr[0]
 
-            dim = 16*N
-            energies = np.zeros((num_k,dim), dtype=complex)
-            U = np.zeros((num_k,dim,dim), dtype=complex)
-            z = np.zeros((num_k,dim))
-            for c2, B0 in enumerate(B0_arr):
-                Bz = B0 * np.ones(N)
+        dim = 16*N
+        energies = np.zeros((num_k,dim), dtype=complex)
+        U = np.zeros((num_k,dim,dim), dtype=complex)
+        z = np.zeros((num_k,dim))
+        for c2, B0 in enumerate(B0_arr):
+            Bz = B0 * np.ones(N)
 
-                for i, k in enumerate(k_arr):
-                    bosonic_system = BosonicSystem(create_Tmatrix(k), create_Umatrix(k))
-                    energies[i,:], U[i,:,:] = bosonic_system.diagonalize()
-                    for j in range(dim):
-                        z[i,j] = np.sum(np.abs(U[i,:N,j])**2) + np.sum(np.abs(U[i,4*N:5*N,j])**2) + \
-                            np.sum(np.abs(U[i,8*N:9*N,j])**2) + np.sum(np.abs(U[i,12*N:13*N,j])**2)
-
+            for i, k in enumerate(k_arr):
+                bosonic_system = BosonicSystem(create_Tmatrix(k), create_Umatrix(k))
+                energies[i,:], U[i,:,:] = bosonic_system.diagonalize()
                 for j in range(dim):
-                    s[c1,c2] += simps(np.logical_and(0.4 < z[:,j], z[:,j] < 0.6), k_arr)
-    except:
-        print("Failed at: ", N, B0)
+                    z[i,j] = np.sum(np.abs(U[i,:N,j])**2) + np.sum(np.abs(U[i,4*N:5*N,j])**2) + \
+                        np.sum(np.abs(U[i,8*N:9*N,j])**2) + np.sum(np.abs(U[i,12*N:13*N,j])**2)
+
+            for j in range(dim):
+                s[c1,c2] += simps(np.logical_and(0.4 < z[:,j], z[:,j] < 0.6), k_arr)
 
     plt.imshow(np.transpose(np.log(s)), origin="bottom", aspect='auto',
                extent=(num_arr[0], num_arr[-1]+1, B0_arr[0], B0_arr[-1]))
     plt.grid()
     plt.colorbar()
     plt.tight_layout()
-    plt.savefig("img/NvsBz.png")
+    plt.savefig("img/NvsBz_cos(x).png")
     plt.show()
 
+    np.save("data/NvsBz_cos(x).npy", s)
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Functions
+# Useful Functions
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def create_Tmatrix(k):
     # alpha = [a{k,1...N}, c{k,1...3*N}, c{-k,1...3*N}]
@@ -371,4 +383,3 @@ def magnon_energy(k, j=0):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 if __name__ == '__main__':
     main()
-    # magnonPolarons_presence()
