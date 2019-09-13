@@ -3,7 +3,6 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.sparse.linalg import eigs as sparse_eigs
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -40,24 +39,13 @@ class BosonicSystem:
         i_arr = np.argsort(np.real(energies))[::-1]
         return energies[i_arr], U[:,i_arr]
 
-    def sparse_diagonalization(self):
-        paraH = np.dot(self.J, self.H)
-        energies, U = sparse_eigs(paraH, k=paraH.shape[0]-2)
-        i_arr = np.argsort(np.real(energies))[::-1]
-        return energies[i_arr], U[:,i_arr]
-
-    def energies(self):
-        energies = np.linalg.eigvals(np.dot(self.J, self.H))
-        i_arr = np.argsort(-energies)
-        return np.real(energies[i_arr][:self.N])
-
     def plot_H(self):
-        plt.imshow(np.imag(self.H + np.transpose(self.H)))
+        plt.imshow(np.log(np.abs(self.H)))
         plt.colorbar()
         plt.grid()
         plt.show()
 
-    def plot_eigvalsH(X):
+    def plot_eigvalsH(self):
         eigvals, _ = np.linalg.eigh(self.H)
         plt.plot(np.arange(eigvals.shape[0]), eigvals, '.')
         plt.grid()
