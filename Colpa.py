@@ -23,7 +23,7 @@ class Colpa:
         dk = k_arr[1] - k_arr[0]
         klim = np.array([k_arr[0], k_arr[-1]])
 
-        energies = np.zeros((num_k, 2*self.N), dtype=complex)
+        energies = np.zeros((num_k, 2*self.N))
         U = np.zeros((num_k, 2*self.N, 2*self.N), dtype=complex)
         for i, k in enumerate(k_arr):
             energies[i,:], U[i,:,:] = self.diagonalize(k)
@@ -34,15 +34,18 @@ class Colpa:
         return energies, U
 
     def diagonalize(self, k):
-        Hk = self.createH(k)
-        L = np.linalg.cholesky(Hk)
-        evals, evecs = paraunitary_eigh( np.dot(np.dot(T(L),self.J), L) )
+        try:
+            Hk = self.createH(k)
+            L = np.linalg.cholesky(Hk)
+            evals, evecs = paraunitary_eigh( np.dot(np.dot(T(L),self.J), L) )
 
-        E = np.dot(self.J, np.diag(evals))
-        U = np.dot(np.linalg.inv(T(L)), np.dot(evecs, np.sqrt(E)))
+            E = np.dot(self.J, np.diag(evals))
+            U = np.dot(np.linalg.inv(T(L)), np.dot(evecs, np.sqrt(E)))
+        except np.linalg.LinAlgError:  # Hk is not definite-positive.
+            E = -np.ones((2*self.N, 2*self.N), dtype=complex)
+            U = -np.ones((2*self.N, 2*self.N), dtype=complex)
 
-        return np.diag(E), U
-
+        return np.real(np.diag(E)), U
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # functions
