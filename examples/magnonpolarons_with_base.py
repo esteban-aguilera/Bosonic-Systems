@@ -18,7 +18,7 @@ os.chdir("..")
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Constants
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-N = 1  # number of sites per unit cell
+Nsites = 2  # number of sites per unit cell
 a = 12.376e-10  # interatomic distance
 
 # phonon constants
@@ -29,21 +29,21 @@ phonon_speeds = np.array([3843, 3843, 7209])
 Phi = m * np.diag(phonon_speeds/a)**2
 
 # magnon constants
-R = a * np.arange(0, N)
+R = a * np.arange(0, Nsites)
 mu_B = 5.788e-2
 g = 2
 S = 20
 J = 0.17
 Dz = 0
-Bz = np.zeros(N)
-Bz = 0. * np.ones(N)  # 1.30
+Bz = np.zeros(Nsites)
+Bz = 0. * np.ones(Nsites)  # 1.30
 
 # magnon polarons constants
 Dprime = np.array([[0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0],
                    [0.0, 0.0, 0.0]])
-Bprime = np.zeros((N, 3, 3*N)) + 1
-for j in range(N):
+Bprime = np.zeros((Nsites, 3, 3*Nsites)) + 1
+for j in range(Nsites):
     Bprime[j,0,3*j] += 0.0  # 2*np.pi/(N*a)*np.cos(2*np.pi/(N*a)*R[j])  # d(Bx)/dx
     Bprime[j,1,3*j] += 0.0  # d(By)/dx
     Bprime[j,2,3*j] += 0.0  # d(Bz)/dx
@@ -56,46 +56,30 @@ for j in range(N):
     Bprime[j,1,3*j+2] += 0.0  # d(By)/dz
     Bprime[j,2,3*j+2] += 0.0  # d(Bz)/dz
 
-num_k = 1000
-# 1Bz
-klim = [-np.pi/(N*a), np.pi/(N*a)]
-
-# positive Bz
-klim = [0.3e9, 0.7e9]
-ylim = [0,3]
-
-# zoom
-# klim = [1.15e9, 1.20e9]
-# ylim = [11, 12]
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # main
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def main():
-    # dispersion_relation()
+    k_arr = np.linspace(-np.pi/(Nsites*a), np.pi/(Nsites*a), num=1000)
+    k_arr = np.linspace(1e7, np.pi/(Nsites*a), num=1000)
+
+    dispersion_relation(k_arr, ylim=[0,3])
     # MPpresence()
     # plot_MPpresence("NvsBz_cos(x)")
-
-    k = np.mean(klim)
-    bosonic_system = BosonicSystem(create_Tmatrix(k), create_Umatrix(k))
-    bosonic_system.plot_H()
-    energies, U = bosonic_system.diagonalize()
-
-    print(np.real(energies))
-    show_matrix(np.abs(U[:8*N, :8*N]))
-
-    # show_matrix(np.abs(create_Tmatrix(k)))
-    # show_matrix(np.abs(create_Umatrix(k)))
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Routines
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-def dispersion_relation():
-    k_arr = np.linspace(*klim, num=num_k)
-
+def dispersion_relation(k_arr, N=Nsites, a=a, phonon_speeds=phonon_speeds,
+                        J=J, Dz=Dz, Bz=Bz, Bprime=Bprime, S=S, m=m, hbar=hbar,
+                        mu_B=mu_B, g=g, ylim=None,
+                        path="img", fn="mp_dispersion", show_plot=False):
     dim = 16*N
+    num_k = k_arr.shape[0]
     dk = k_arr[1] - k_arr[0]
+    klim = [k_arr[0], k_arr[-1]]
 
     energies = np.zeros((num_k,dim), dtype=complex)
     U = np.zeros((num_k,dim,dim), dtype=complex)
@@ -107,6 +91,9 @@ def dispersion_relation():
         for j in range(dim):
             z[i,j] = np.sum(np.abs(U[i,:N,j])**2) + np.sum(np.abs(U[i,4*N:5*N,j])**2) + \
                 np.sum(np.abs(U[i,8*N:9*N,j])**2) + np.sum(np.abs(U[i,12*N:13*N,j])**2)
+
+    if(ylim is None):
+        ylim = [0, np.real(energies).max()]
 
     # plot dispersion relation
     fig = plt.figure()
@@ -126,21 +113,16 @@ def dispersion_relation():
 
     ax.grid()
     ax.set_xlim(klim)
-    try:
-        ax.set_ylim(ylim)
-        ax.text(0.97*klim[1], 0.97*ylim[1], "$B_z=%.3f$",
+    ax.set_ylim(ylim)
+    ax.text(0.97*klim[1], 0.97*ylim[1], "$B_z=%.3f$" % Bz[0],
             horizontalalignment='right', verticalalignment='top',
             bbox=dict(boxstyle='round', facecolor='white', alpha=1))
-    except:
-        ax.set_ylim(0, np.real(energies).max())
-        ax.text(0.97*klim[1], 0.97*np.real(energies).max(), "$B_z=%.3f$" % Bz[0],
-            horizontalalignment='right', verticalalignment='top',
-            bbox=dict(boxstyle='round', facecolor='white', alpha=1))
-
 
     fig.tight_layout()
-    fig.savefig("img/mp_dispersion.png")
-    plt.show()
+    fig.savefig("%s/%s.png" % (path, fn))
+    if(show_plot is True):
+        plt.show()
+
     plt.close(fig)
 
     # plot group velocity
@@ -239,7 +221,7 @@ def create_Tmatrix(k):
     # alpha = [a{k,1...N}, c{k,1...3*N}, c{-k,1...3*N}]
     Tmatrix = np.zeros((8*N, 8*N), dtype=complex)
 
-    phi, eps_arr = order_eig(Phi_matrix(k))
+    phi, eps_arr = ordered_eigh(Phi_matrix(k))
     Jk, J0 = J_matrix(k), J_matrix(0)
     Dk, D0 = Dz_matrix(k), Dz_matrix(0)
     Dprime_k, Dprime_0 = Dprime_tensor(k), Dprime_tensor(0)
@@ -293,7 +275,7 @@ def create_Umatrix(k):
     # alpha = [a{k,1...N}, c{k,1...3*N}, c{-k,1...3*N}]
     Umatrix = np.zeros((8*N, 8*N), dtype=complex)
 
-    phi, eps_arr = order_eig(Phi_matrix(k))
+    phi, eps_arr = ordered_eigh(Phi_matrix(k))
     Jk, J0 = J_matrix(k), J_matrix(0)
     Dk, D0 = Dz_matrix(k), Dz_matrix(0)
 
@@ -390,8 +372,8 @@ def show_matrix(X):
     plt.show()
 
 
-def order_eig(X):
-    vals, vecs = np.linalg.eig(X)
+def ordered_eigh(X):
+    vals, vecs = np.linalg.eigh(X)
     i_arr = np.argsort(np.real(vals))[::-1]
     return vals[i_arr], vecs[:, i_arr]
 
