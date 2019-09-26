@@ -43,7 +43,7 @@ class Colpa:
             U = np.dot(np.linalg.inv(T(L)), np.dot(evecs, np.sqrt(E)))
         except np.linalg.LinAlgError:  # Hk is not definite-positive.
             E = -np.ones((2*self.N, 2*self.N), dtype=complex)
-            U = -np.ones((2*self.N, 2*self.N), dtype=complex)
+            U = np.zeros((2*self.N, 2*self.N), dtype=complex)
 
         return np.real(np.diag(E)), U
 
