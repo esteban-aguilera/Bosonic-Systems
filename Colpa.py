@@ -35,27 +35,27 @@ class Colpa:
 
     def diagonalize(self, k):
         try:
-            Hk = self.createH(k)
-            L = np.linalg.cholesky(Hk)
-            evals, evecs = paraunitary_eigh( np.dot(np.dot(T(L),self.J), L) )
+            Hamiltonian = self.createH(k)
+            H = HermitianConjugate( np.linalg.cholesky(Hamiltonian) )
+            L, U = paraunitary_eigh( np.dot(np.dot(H,self.J), HermitianConjugate(H)) )
 
-            E = np.dot(self.J, np.diag(evals))
-            U = np.dot(np.linalg.inv(T(L)), np.dot(evecs, np.sqrt(E)))
-        except np.linalg.LinAlgError:  # Hk is not definite-positive.
+            E = np.dot(self.J, np.diag(L))
+            T = np.linalg.inv( np.dot(np.linalg.inv(H), np.dot(U, np.sqrt(E))) )
+        except np.linalg.LinAlgError:  # Hamiltonian is not definite-positive.
             E = -np.ones((2*self.N, 2*self.N), dtype=complex)
-            U = np.zeros((2*self.N, 2*self.N), dtype=complex)
+            T = np.zeros((2*self.N, 2*self.N), dtype=complex)
 
-        return np.real(np.diag(E)), U
+        return np.real(np.diag(E)), T
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # functions
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def paraunitary_eigh(X):
     N = X.shape[0]//2
-    vals, vecs = np.linalg.eigh(X)
-    i_arr = np.argsort(-np.real(vals))
+    evals, evecs = np.linalg.eig(X)
+    i_arr = np.argsort(-np.real(evals))
     j_arr = np.concatenate([i_arr[:N],i_arr[N:][::-1]])
-    return vals[j_arr], vecs[:, j_arr]
+    return evals[j_arr], evecs[:, j_arr]
 
 
 def ordered_eigh(X):
@@ -70,7 +70,7 @@ def ordered_eig(X):
     return vals[i_arr], vecs[:, i_arr]
 
 
-def T(X):
+def HermitianConjugate(X):
     return np.conjugate(np.transpose(X))
 
 
