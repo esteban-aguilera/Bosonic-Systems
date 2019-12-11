@@ -4,49 +4,89 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+import diagonalization_routines as diag
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # class
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 class BosonicSystem:
 
-    def __init__(self, T, U):
+    def __init__(self, createH, **kwargs):
         """Create a system composed of bosonic N bosonic operators.
 
         Params:
             T: Matrix that represent the dagger(a_i)*a_j terms
             U: Matrixs that represent the dagger(a_i)*dagger(a_j) terms
         """
-        assert(T.shape[0] == T.shape[1])
-        assert(U.shape[0] == U.shape[1])
-        assert(T.shape[0] == U.shape[0])
-        self.N = T.shape[0]
+        self.createH = createH
 
-        # Create full Hamiltonian matrix
-        A = np.concatenate((T, U), axis=1)
-        B = np.concatenate((np.conjugate(U), np.conjugate(T)), axis=1)
-        self.H = np.concatenate((A, B), axis=0)
+        Hamiltonian = createH(0)
+        if((len(Hamiltonian.shape) != 2) or
+           (Hamiltonian.shape[0] != Hamiltonian.shape[1]) or
+           (Hamiltonian.shape[0] % 2 != 0)):
+            raise ValueError('Hamiltonian\'s shape must be (2*N, 2*N), '
+                'but it has shape {0}'.format(Hamiltonian.shape))
+        self.ndim = Hamiltonian.shape[0]
 
-        vals = np.linalg.eigvalsh(self.H)
-        if(np.any(vals < -1e-7)):
-            print("Hamiltonian is not positive definite!", np.min(vals))
+        self.dmethod = kwargs.get('dmethod', 'bogoliubov').lower()
 
-        self.J = np.diag(np.concatenate((np.ones(self.N), -np.ones(self.N))))
+    def diagonalize(self, k):
+        if(self.dmethod == 'bogoliubov'):
+            return diag.bogoliubov( self.createH(k) )
+        elif(self.dmethod == 'colpa'):
+            return diag.colpa( self.createH(k) )
 
-    def diagonalize(self):
-        paraH = np.dot(self.J, self.H)
-        energies, U = np.linalg.eig(paraH)
-        i_arr = np.argsort(np.real(energies))[::-1]
-        return energies[i_arr], U[:,i_arr]
+    def get_dispersion(self, k_arr, fn=None):
+        num_k = k_arr.shape[0]
 
-    def plot_H(self):
-        plt.imshow(np.log(np.abs(self.H)))
-        plt.colorbar()
-        plt.grid()
-        plt.show()
+        energies = np.zeros((num_k, self.ndim))
+        U = np.zeros((num_k, self.ndim, self.ndim), dtype=complex)
+        for i, k in enumerate(k_arr):
+            energies[i,:], U[i,:,:] = self.diagonalize(k)
 
-    def plot_eigvalsH(self):
-        eigvals, _ = np.linalg.eigh(self.H)
-        plt.plot(np.arange(eigvals.shape[0]), eigvals, '.')
-        plt.grid()
-        plt.show()
+        if(fn is not None):
+            np.save(fn, [energies, U])
+
+        return energies, U
+
+    def plot_dispersion(self, k_arr, xlim=None, ylim=None, title='',
+                        xticks=[], xlabels=[], yticks=[], ylabels=[],
+                        fn=None, show=True):
+        # get dispersion relation
+        energies, U = self.get_dispersion(k_arr)
+
+        # create plot
+        fig = plt.figure()
+        ax = fig.add_subplot()
+
+        for i in range(energies.shape[1]):
+            ax.plot(np.real(energies[:,i]))
+
+        ax.set_title(title)
+
+        if(xlim is None):
+            ax.set_xlim([0, energies.shape[0]])
+        else:
+            ax.set_xlim(xlim)
+
+        if(ylim is None):
+            ax.set_ylim([0, 1.05*np.max(energies)])
+        else:
+            ax.sett_ylim(ylim)
+
+        ax.set_xticks(xticks)
+        ax.set_xticklabels(xlabels, fontsize=12)
+        ax.xaxis.grid(True)
+
+        if(yticks != [] and ylabels != []):
+            ax.set_yticks(yticks)
+            ax.set_yticklabels(ylabels, fontsize=12)
+            ax.yaxis.grid(True)
+
+        if(fn is not None):
+            fig.savefig(fn)
+
+        if(show is True):
+            plt.show()
+        plt.close(fig)
