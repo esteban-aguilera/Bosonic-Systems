@@ -1,4 +1,9 @@
 __pycache__/*
+build/*
+cython_modules/*
+
 anim/*
 data/*
 img/*
+
+*.so
