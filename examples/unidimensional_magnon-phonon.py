@@ -11,20 +11,21 @@ from utils import create_karr
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # parameters
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-hbar = 1+0*4.135667696e-12  # Planck reduced constant [meV*s]
-muB = 1+0*5.788e-2  # Bohr's magneton [meV]
+hbar = 6.582e-13  # Planck reduced constant [meV*s]
+muB = 5.788e-2  # Bohr's magneton [meV]
 g = 2  # g-factor
 
-m = 1  # mass
-omega0 = 1  # natural frequency of phonon.
-a = 1  # nearest neighbor distance
+a = 12.376e-10  # nearest neighbor distance
 
-S = 1  # spin value
-J = 1  # Heisenberg exchange
+m = 9.8e-24  # mass
+omega0 = 7209 / a  # natural frequency of phonons.
+
+S = 20  # spin value
+J = 0.17  # Heisenberg exchange
 Dz = 0  # z-component of the Dzyaloshinskii-Moriya interaction.
-Bz = 0.01  # z-component of the magnetic field
+Bz = 1  # z-component of the magnetic field
 
-Bperp = 0.01
+Bperp = 8.24e-9
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
