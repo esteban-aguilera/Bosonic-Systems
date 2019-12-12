@@ -34,7 +34,6 @@ def main():
     for dmethod in ['Bogoliubov', 'Colpa']:
         bs = BosonicSystem(createH)
 
-        nums = [300, 300, 400]
         k_arr = np.linspace(-np.pi/a, np.pi/a, num=1000)
 
         bs.plot_dispersion(k_arr, p_arr=[0,2],
