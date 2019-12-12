@@ -4,6 +4,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from matplotlib.collections import LineCollection
+
 import diagonalization_routines as diag
 
 
@@ -50,9 +52,8 @@ class BosonicSystem:
 
         return energies, U
 
-    def plot_dispersion(self, k_arr, xlim=None, ylim=None, title='',
-                        xticks=[], xlabels=[], yticks=[], ylabels=[],
-                        fn=None, show=True):
+    def plot_dispersion(self, k_arr, p_arr=None, xlim=None, ylim=None, title='',
+        xticks=[], xlabels=[], yticks=[], ylabels=[], fn=None, show=True):
         # get dispersion relation
         energies, U = self.get_dispersion(k_arr)
 
@@ -60,8 +61,27 @@ class BosonicSystem:
         fig = plt.figure()
         ax = fig.add_subplot()
 
-        for i in range(energies.shape[1]):
-            ax.plot(np.real(energies[:,i]))
+        if(p_arr is None):
+            for i in range(energies.shape[1]):
+                ax.plot(np.real(energies[:,i]), color='darkblue')
+        else:
+            z = np.zeros((U.shape[0], energies.shape[1]))
+            for i, k in enumerate(k_arr):
+                for j in range(energies.shape[1]):
+                    z[i,j] = np.sum(np.abs(U[i,j,p_arr])**2)
+
+            for j in range(energies.shape[1]):
+                x, y = np.arange(energies.shape[0]), energies[:,j]
+
+                points = np.array([x, y]).T.reshape(-1, 1, 2)
+                segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+                norm = plt.Normalize(vmin=0, vmax=1)
+                lc = LineCollection(segments, cmap='brg', norm=norm)
+                lc.set_array(z[:,j])
+                line = ax.add_collection(lc)
+            cbar = fig.colorbar(line, ax=ax, ticks=[0.0, 1.0])
+            cbar.ax.set_yticklabels(["Ph", "M"])
 
         ax.set_title(title)
 
