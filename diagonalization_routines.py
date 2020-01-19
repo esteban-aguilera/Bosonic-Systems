@@ -19,7 +19,7 @@ def bogoliubov(Hamiltonian):
     paraH = np.dot(J, Hamiltonian)
     energies, T = paraunitary_eig( paraH )
 
-    return np.concatenate([energies[:N], -energies[N:]]), T
+    return energies, T
 
 
 def colpa(Hamiltonian):
@@ -35,9 +35,8 @@ def colpa(Hamiltonian):
         L, U = paraunitary_eig( np.dot(np.dot(H,J), HermitianConjugate(H)) )
 
         E = np.dot(J, np.diag(L))
-        T = np.linalg.inv( np.dot(np.linalg.inv(H), np.dot(U, np.sqrt(E))) )
-    except np.linalg.LinAlgError:  # Hamiltonian is not definite-positive.
-        E = -np.ones((2*N, 2*N), dtype=complex)
-        T = np.zeros((2*N, 2*N), dtype=complex)
+        T = np.dot(np.linalg.inv(H), np.dot(U, np.sqrt(E)))
 
-    return np.real(np.diag(E)), T
+        return np.diag(E), T
+    except np.linalg.LinAlgError:  # Hamiltonian is not definite-positive.
+        return -np.ones(2*N, dtype=complex), np.zeros((2*N, 2*N), dtype=complex)
