@@ -33,21 +33,22 @@ M = 2*np.pi/(3*a) * np.array( [1, 0, 0] )
 Kp = 2*np.pi/(3*a) * np.array( [1, 1/np.sqrt(3), 0] )
 Kn = 2*np.pi/(3*a) * np.array( [1, -1/np.sqrt(3), 0] )
 
+# k-space path
+kpath = Gamma, M, Kp, Gamma
+numk = 10000
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # main
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def main():
     for dmethod in ['Bogoliubov', 'Colpa']:
-        bs = BosonicSystem(createH)
+        k_arr, nums = create_karr(*kpath, num=numk, get_nums=True)
 
-        nums = [300, 300, 400]
-        k_arr = create_karr(Gamma, M, Kp, Gamma, nums=nums)
-
-        print(k_arr)
         xticks = [np.sum(nums[:n]) for n in range(len(nums)+1)]
         xlabels = ['$\Gamma$', '$M$', '$K^+$', '$\Gamma$']
 
+        bs = BosonicSystem(createH)
         bs.plot_dispersion(k_arr, title='Honeycomb Magnons with %s\'s Method' % dmethod,
                            xticks=xticks, xlabels=xlabels, show=True)
 
